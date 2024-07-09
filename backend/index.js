@@ -1,23 +1,43 @@
-import express from 'express'
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import dotenv from 'dotenv'
-import colors from 'colors'
-import bodyParser from "body-parser"
-import ConnectDB from './config/ConnectDB.js'
 import cors from 'cors'
+import ConnnectDB from './config/ConnectDB.js'
 import UserRoutes from './routes/UserRoutes.js'
 
 dotenv.config()
 
-ConnectDB()
+const app = express();
+// const server = createServer(app);
+// const io = new Server(server);
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:8080",
+    methods: ["GET", "POST"]
+  }
+});
+ConnnectDB()
 
-const app = express()
-app.use(bodyParser.json())
-app.use(cors())
+app.use(cors());
+app.use(express.json());
+app.use('/auth/v1', UserRoutes);
 
-app.use('/auth/v1', UserRoutes)
+io.on('connection', (socket) => {
+  console.log('New client connected');
+  
+  socket.on('join', ({ userId }) => {
+    socket.join(userId);
+  });
 
-const PORT = process.env.PORT || 5000;
+  socket.on('sendMessage', ({ sender, receiver, message }) => {
+    io.to(receiver).emit('receiveMessage', { sender, message });
+  });
 
-app.listen(PORT, ()=>{
-   console.log(`Server Runinning on ${process.env.DEV_MODE} Mode on Port ${PORT}`.bgCyan.white)
-})
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
+const PORT = process.env.PORT
+app.listen(PORT, () => console.log(`Server running on port ${process.env.DEV_MODE} on port ${PORT}`));
