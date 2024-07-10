@@ -1,10 +1,9 @@
 import JWT from 'jsonwebtoken'
 import dotenv from 'dotenv'
 
-
 dotenv.config()
 
-export const requireSignIn = async(req, res, next) => {
+const requireSignIn = async(req, res, next) => {
    try {
       const decode = JWT.verify(
          req.headers.authorization,
@@ -16,3 +15,4 @@ export const requireSignIn = async(req, res, next) => {
       console.log(error)
    }
 }
+export default requireSignIn

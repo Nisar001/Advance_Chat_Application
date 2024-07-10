@@ -12,7 +12,7 @@ function Signup() {
 
   const handleSignup = async () => {
     try {
-      await axios.post('http://localhost:8080/auth/v1/register', { userName, userEmail, userPhone, userPassword });
+      await axios.post('http://localhost:8080/auth/register', { userName, userEmail, userPhone, userPassword });
       navigate('/login');
     } catch (error) {
       console.error('Error signing up:', error);

@@ -1,21 +1,39 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Login from './components/Login.js';
+import React, { useState } from 'react';
 import Signup from './components/Signup.js';
+import Signin from './components/Login.js';
 import Chat from './components/Chat.js';
-import './App.css'
+import { BrowserRouter } from 'react-router-dom';
 
-function App() {
+const App = () => {
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
+
+  const handleSetToken = (newToken) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+  };
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/chat" element={<Chat />} />
-      </Routes>
-    </Router>
+    <BrowserRouter>
+    <div>
+      {!token ? (
+        <>
+          <Signup />
+          <Signin setToken={handleSetToken} />
+        </>
+      ) : (
+        <>
+          <button onClick={handleLogout}>Logout</button>
+          <Chat token={token} />
+        </>
+      )}
+    </div>
+    </BrowserRouter>
   );
-}
+};
 
 export default App;

@@ -96,3 +96,23 @@ export const loginController = async(req, res) => {
       })
    }
 };
+
+export const usersController = async(req, res) => {
+   try {
+    const currentUserId = req.user.id;
+    const users = await UserModel.find({ _id: { $ne: currentUserId } }).select("-userPassword");
+    res.status(201).json(users);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+};
+
+export const Searching = async(req, res) => {
+   try {
+    const { query } = req.query;
+    const user = await UserModel.find({ userName: { $regex: query, $options: "i" } }).select("userName -_id");
+    res.status(201).json(user);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+}
