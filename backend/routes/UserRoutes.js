@@ -1,17 +1,17 @@
 import express from "express";
-import { loginController, registerController, Searching, usersController } from "../controllers/UserController.js";
-import requireSignIn  from "../middlewares/AuthMiddleware.js";
-import UserModel from "../models/UserModel.js";
 
-const router = express.Router()
+import authMiddleware from "./../middlewares/AuthMiddleware.js";
+import {
+  alluser,
+  searchByName,
+  signin,
+  signup,
+} from "../controllers/UserController.js";
 
-router.post('/register', registerController)
-router.post('/login', loginController)
-router.get('/search', requireSignIn, Searching)
-router.get('/all/:id', requireSignIn, usersController)
-router.get('/users', requireSignIn, usersController, async(req, res) => {
-   const users = await UserModel.find({});
-   res.send(users);
-})
+const route = express.Router();
+route.get("/all/:id", authMiddleware, alluser);
+route.post("/signin", signin);
+route.post("/signup", signup);
+route.get("/search", authMiddleware, searchByName);
 
-export default router
+export default route;

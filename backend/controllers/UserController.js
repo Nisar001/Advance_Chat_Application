@@ -1,118 +1,67 @@
-import UserModel from "../models/UserModel.js";
-import { comparePassword, hashPassword } from './../helpers/AuthHelper.js'
-import JWT from 'jsonwebtoken'
+import model from "../models/UserModel.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const registerController = async(req, res) => {
-   try {
-      const {userName, userEmail, userPhone, userPassword} = req.body
-      if(!userName){
-         return res.send({
-            message: "Name is Required"
-         })
-      }
-      if(!userEmail){
-         return res.send({
-            message: "Email is Required"
-         })
-      }
-      if(!userPhone){
-         return res.send({
-            message: "Phone is Required"
-         })
-      }
-      if(!userPassword){
-         return res.send({
-            message: "Password is Required"
-         })
-      }
-      const existingUser = await UserModel.findOne({userEmail})
-      if(existingUser){
-         return res.send({message:"Already Registered Plase Login"})
-      }
-      const hashedPassword = await hashPassword(userPassword);
-      const user = await new UserModel({
-         userName,
-         userEmail,
-         userPhone,
-         userPassword: hashedPassword,
-      }).save();
-
-      res.status(200).send({
-         success: true,
-         message: "User register Successfully"
-      })
-
-   } catch (error) {
-      console.log(error)
-      res.status(500).json({
-         success: false,
-         message: "Error in Registration",
-         error
-      })
-   }
+export const signup = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let user = await model.findOne({ email });
+    if (user) {
+      return res.status(400).json({ msg: "User already exists" });
+    }
+    const newuser = new model({
+      name,
+      email,
+      password: hashedPassword,
+    });
+    await newuser.save();
+    res.status(201).json(newuser);
+  } catch (err) {
+    res.status(500).send("Server error: " + err.message);
+  }
 };
 
-export const loginController = async(req, res) => {
-   try {
-      const {userEmail, userPassword} = req.body;
+export const signin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await model.findOne({ email });
+    const ismatch = await bcrypt.compare(password, user.password);
 
-      if(!userEmail || !userPassword){
-         return res.status(404).json({
-            success: false,
-            message: "Invalid Emial or Password"
-         })
-      }
-      const user = await UserModel.findOne({userEmail})
-      if(!user){
-         return res.status(404).json({
-            success: false,
-            message: "Email is Not Registered"
-         })
-      }
-      const match = await comparePassword(userPassword, user.userPassword)
-      if(!match){
-         return res.json({
-            success: false,
-            message: "Invalid Password"
-         })
-      }
-      const token = await JWT.sign({_id:user._id}, process.env.JWT_SECRET, {expiresIn: "2d"})
-      res.status(200).send({
-         success: true,
-         message: "Login Successfully",
-         user: {
-            name: user.userName,
-            email: user.userEmail,
-            phone: user.userPhone
-         },
-         token,
-      })
-   } catch (error) {
-      console.log(error)
-      res.status(500).json({
-         success: false,
-         message: "Error in Login",
-         error
-      })
-   }
+    if (!user || !ismatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "2d",
+    });
+    res.status(201).json({ token, userId: user.id });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 };
 
-export const usersController = async(req, res) => {
-   try {
+export const alluser = async (req, res) => {
+  try {
     const currentUserId = req.user.id;
-    const users = await UserModel.find({ _id: { $ne: currentUserId } }).select("-userPassword");
+    const users = await model
+      .find({ _id: { $ne: currentUserId } })
+      .select("-password");
     res.status(201).json(users);
   } catch (err) {
     res.status(500).send(err.message);
   }
 };
 
-export const Searching = async(req, res) => {
-   try {
+export const searchByName = async (req, res) => {
+  try {
     const { query } = req.query;
-    const user = await UserModel.find({ userName: { $regex: query, $options: "i" } }).select("userName -_id");
+    const user = await model
+      .find({ name: { $regex: query, $options: "i" } })
+      .select("name -_id");
     res.status(201).json(user);
   } catch (err) {
     res.status(500).send(err.message);
   }
-}
+};

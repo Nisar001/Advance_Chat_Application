@@ -1,9 +1,18 @@
-import express from 'express'
-import getMessages  from "../controllers/ChatController.js";
-import requireSignIn  from '../middlewares/AuthMiddleware.js'; 
+import express from "express";
+import {
+  getMessages,
+  getMessagesByRecipientName,
+} from "../controllers/ChatController.js";
 
-const route = express.Router();
+import authMiddleware from "./../middlewares/AuthMiddleware.js";
 
-route.get('/chat/', requireSignIn, getMessages);
+const router = express.Router();
 
-export default route
+router.get("/chat/:recipientId", authMiddleware, getMessages);
+router.get(
+  "/messages/:recipientName",
+  authMiddleware,
+  getMessagesByRecipientName
+);
+
+export default router;
