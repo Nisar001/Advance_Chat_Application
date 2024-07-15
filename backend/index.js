@@ -1,58 +1,31 @@
-import express from "express";
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
+const mongoose = require("mongoose");
+const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/UserRoutes");
+const chatSocket = require("./sockets/chatSocket");
+const { authenticateSocket } = require("./middlewares/AuthMiddleware");
+const dbConfig = require("./config/ConnectDB");
+
 const app = express();
-
-import http from "http";
-import { Server } from "socket.io";
 const server = http.createServer(app);
-const io = new Server(server);
+const io = socketIo(server);
 
-import bodyparser from "body-parser";
-app.use(bodyparser.json());
-import path from "path";
-import { fileURLToPath } from "url";
+dbConfig(); // Initialize MongoDB connection
 
-import Chat from "./models/MessageModel.js";
-import dotenv from "dotenv";
-dotenv.config();
-const port = process.env.PORT || 3333;
+app.use(express.json());
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-io.on("connection", (client) => {
-  console.log("a user connected");
-
-  client.on("sendMessage", async (data) => {
-    const { recipientId, text, senderId } = data;
-    let chat = await Chat.findOne({
-      participants: { $all: [senderId, recipientId] },
-    });
-    if (!chat) {
-      chat = new Chat({ participants: [senderId, recipientId] });
-    }
-    chat.messages.push({ sender: senderId, text });
-    await chat.save();
-  });
-
-  client.on("disconnected", () => {
-    console.log("user disconnected");
-  });
-});
-
-import ConnectDB from "./config/ConnectDB.js";
-ConnectDB();
-
-import userRoute from "./routes/UserRoutes.js";
-import chatRoute from "./routes/ChatRoutes.js";
-app.use("/api", chatRoute);
-app.use("/api", userRoute);
-
-app.use(express.static(path.resolve("./public")));
+io.use(authenticateSocket); // Middleware to authenticate socket connections
+chatSocket(io);
 
 app.get("/", (req, res) => {
-  return res.sendFile("/public/index.html");
+  res.sendFile(__dirname + "/index.html");
 });
 
-server.listen(port, () => {
-  console.log(`Server listem on port ${port}`.bgCyan.white);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });

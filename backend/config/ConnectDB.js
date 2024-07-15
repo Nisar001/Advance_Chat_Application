@@ -1,19 +1,18 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import colors from "colors";
+const mongoose = require("mongoose");
 
-dotenv.config();
+const dbConfig = () => {
+  mongoose.connect("mongodb://localhost/chat-app", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
 
-const ConnectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URL);
-    console.log(
-      `Connected to the MongoDB Database ${conn.connection.host}`.bgMagenta
-        .white
-    );
-  } catch (error) {
-    console.log(`Error in MongoDB ${error}`.bgRed.white);
-  }
+  mongoose.connection
+    .once("open", () => {
+      console.log("Connected to MongoDB");
+    })
+    .on("error", (error) => {
+      console.log("Connection error:", error);
+    });
 };
 
-export default ConnectDB;
+module.exports = dbConfig;

@@ -1,17 +1,10 @@
-import express from "express";
+const express = require("express");
+const { getUsers, searchUsers } = require("../controllers/UserController");
+const { authenticate } = require("../middlewares/AuthMiddleware");
 
-import authMiddleware from "./../middlewares/AuthMiddleware.js";
-import {
-  alluser,
-  searchByName,
-  signin,
-  signup,
-} from "../controllers/UserController.js";
+const router = express.Router();
 
-const route = express.Router();
-route.get("/all/:id", authMiddleware, alluser);
-route.post("/signin", signin);
-route.post("/signup", signup);
-route.get("/search", authMiddleware, searchByName);
+router.get("/", authenticate, getUsers);
+router.get("/search", authenticate, searchUsers);
 
-export default route;
+module.exports = router;
