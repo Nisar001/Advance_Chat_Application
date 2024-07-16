@@ -1,48 +1,53 @@
 const User = require("../models/UserModel");
-const { getPagination } = require("../utils/pagination");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+
+exports.signup = async (req, res) => {
+  try {
+    const user = new User(req.body);
+    await user.save();
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    res.status(201).send({ user, token });
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
+      return res.status(401).send({ error: "Invalid login credentials" });
+    }
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    res.send({ user, token });
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
 
 exports.getUsers = async (req, res) => {
   try {
-    const { page, size } = req.query;
-    const { limit, offset } = getPagination(page, size);
-
-    const users = await User.find()
-      .skip(offset)
-      .limit(limit)
-      .select("-password");
-
-    res.status(200).json(users);
+    const users = await User.find({}, "-password");
+    res.send(users);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching users", error });
+    res.status(500).send(error);
   }
 };
 
 exports.searchUsers = async (req, res) => {
   try {
-    const { name, page = 1, size = 10 } = req.query;
-    const { limit, offset } = getPagination(page, size);
-
-    const pipeline = [
-      {
-        $match: {
-          username: { $regex: name, $options: "i" },
-        },
-      },
-      {
-        $skip: [limit - 1] * offset,
-      },
-      {
-        $limit: offset,
-      },
-    ];
-
-    const result = await User.aggregate(pipeline);
-    return result.items === 0
-      ? res.status(200).json({
-          message: "Back to the previous index, no more items are found",
-        })
-      : res.status(200).json({ ...result });
+    const searchTerm = req.query.term;
+    const users = await User.find(
+      { username: new RegExp(searchTerm, "i") },
+      "-password"
+    );
+    res.send(users);
   } catch (error) {
-    res.status(500).json({ message: "Error searching users", error });
+    res.status(500).send(error);
   }
+};
+
+exports.verifyToken = async (req, res) => {
+  res.send({ user: req.user });
 };

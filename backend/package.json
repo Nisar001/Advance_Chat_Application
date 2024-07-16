@@ -2,7 +2,7 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js", 
+  "main": "index.js",
   "type": "commonjs",
   "scripts": {
     "start": "node index.js",
@@ -25,6 +25,7 @@
     "nodemon": "^3.1.4",
     "npm": "^10.8.1",
     "socket.io": "3.0",
+    "socket.io-client": "^4.7.5",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.4.0"
   },
   "optionalDependencies": {

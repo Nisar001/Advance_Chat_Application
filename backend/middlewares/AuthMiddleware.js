@@ -1,27 +1,24 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/UserModel");
+const dotenv = require("dotenv");
+dotenv.config();
 
-exports.authenticate = (req, res, next) => {
-  const token = req.header("Authorization");
-  if (!token) return res.status(401).json({ message: "Access denied" });
-
+const auth = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, "secretKey");
-    req.user = decoded;
+    const token = req.header("Authorization").replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      throw new Error();
+    }
+
+    req.token = token;
+    req.user = user;
     next();
   } catch (error) {
-    res.status(400).json({ message: "Invalid token" });
+    res.status(401).send({ error: "Please authenticate." });
   }
 };
 
-exports.authenticateSocket = (socket, next) => {
-  const token = socket.handshake.auth.token;
-  if (!token) return next(new Error("Authentication error"));
-
-  try {
-    const decoded = jwt.verify(token, "secretKey");
-    socket.user = decoded;
-    next();
-  } catch (error) {
-    next(new Error("Authentication error"));
-  }
-};
+module.exports = auth;
