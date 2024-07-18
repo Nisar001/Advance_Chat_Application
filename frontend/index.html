@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Chat Application</title>
+   <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+   <div id="auth-container">
+      <h2>Login or Sign Up</h2>
+      <input type="text" id="email" placeholder="Email">
+      <input type="text" id="username" placeholder="Username">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <button onclick="signup()">Sign Up</button>
+   </div>
+
+   <div id="chat-container" style="display: none;">
+      <h2>Welcome, <span id="user-welcome"></span></h2>
+      <div id="user-search">
+         <input type="text" id="search-input" placeholder="Search users">
+         <button onclick="searchUsers()">Search</button>
+      </div>
+      <div id="users-list">
+         <h3>Users</h3>
+         <ul id="users"></ul>
+      </div>
+      <div id="chat-box" style="display: none;">
+         <h3>Chat with <span id="chat-with"></span></h3>
+         <div id="messages"></div>
+         <input type="text" id="message-input" placeholder="Type a message">
+         <button onclick="sendMessage()">Send</button>
+      </div>
+   </div>
+
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+   <script src="script.js"></script>
+</body>
+
+</html>
